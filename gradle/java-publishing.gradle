@@ -1,0 +1,81 @@
+assert plugins.hasPlugin("java")
+
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.artifactory'
+
+tasks.withType(Jar) {
+    from "$rootDir/LICENSE"
+    from "$rootDir/NOTICE"
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+
+            artifact javadocJar
+            artifact sourcesJar
+
+            pom {
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'https://github.com/linkedin/ambry/blob/master/LICENSE'
+                        distribution = 'repo'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/linkedin/ambry.git'
+                }
+                issueManagement {
+                    url = 'https://github.com/linkedin/ambry/issues'
+                    system = 'GitHub issues'
+                }
+                ciManagement {
+                    url='https://travis-ci.org/linkedin/ambry'
+                    system='TravisCI'
+                }
+            }
+        }
+    }
+}
+// Artifactory publishing
+artifactory {
+    //docs: https://www.jfrog.com/confluence/display/rtf/gradle+artifactory+plugin
+    contextUrl = 'https://linkedin.jfrog.io/artifactory'
+    publish {
+        repository {
+            repoKey = 'ambry'
+            username = System.getenv('ARTIFACTORY_USER')
+            password = System.getenv('ARTIFACTORY_API_KEY')
+            maven = true
+        }
+
+        defaults {
+            publications('maven')
+        }
+    }
+}
+
+artifactoryPublish {
+    skip = project.hasProperty('artifactory.dryRun')
+
+    doFirst {
+        println "Publishing $jar.baseName to Artifactory (dryRun: $skip)"
+    }
+}

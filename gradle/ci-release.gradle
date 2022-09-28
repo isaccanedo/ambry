@@ -1,0 +1,39 @@
+task artifactoryPublishAll {
+    description = "Runs 'artifactoryPublish' tasks from all projects"
+    mustRunAfter "gitPush" //git push is easier to rollback so we run it first
+}
+
+allprojects {
+    tasks.matching { it.name == "artifactoryPublish" }.all {
+        artifactoryPublishAll.dependsOn it
+    }
+}
+
+task ciPerformRelease {
+    description = "Performs the release, intended to be ran on CI"
+    dependsOn "gitTag", "gitPush", "artifactoryPublishAll"
+}
+
+task gitTag {
+    description = "Creates annotated tag 'v$version'"
+
+    doLast {
+        println "Setting Git user and email to github-actions"
+        exec { commandLine "git", "config", "user.email", "github-actions@github.com" }
+        exec { commandLine "git", "config", "user.name", "github-actions" }
+        println "Creating tag v$version"
+        exec { commandLine "git", "tag", "-a", "-m", "Release $version", "v$version" }
+        println "Created tag v$version"
+    }
+}
+
+task gitPush {
+    description = "Pushes tags by running 'git push --tags'"
+    mustRunAfter "gitTag" //tag first, push later
+
+    doLast {
+      println "Pushing tag v$version"
+      exec { commandLine "git", "push", "--tags" }
+      println "Pushed tag v$version"
+    }
+}
