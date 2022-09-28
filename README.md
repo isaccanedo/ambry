@@ -14,9 +14,6 @@ Ambry is a distributed object store that supports storage of trillions of small 
 
 Requires at least JDK 1.8.
 
-## Documentation
-Detailed documentation is available at https://github.com/linkedin/ambry/wiki
-
 ## Research
 Paper introducing Ambry at [SIGMOD 2016](http://sigmod2016.org/) -> http://dprg.cs.uiuc.edu/data/files/2016/ambry.pdf
 
